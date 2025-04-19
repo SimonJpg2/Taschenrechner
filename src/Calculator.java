@@ -13,7 +13,7 @@ public class Calculator {
         return tokenList;
     }
 
-    public void computeNestingLevel(@NotNull List<Token> tokenList) {
+    public void computeNestingLevel(@NotNull final List<Token> tokenList) {
         int nestingLevel = 0;
 
         for (Token token : tokenList) {
@@ -71,7 +71,7 @@ public class Calculator {
         return expression.getFirst();
     }
 
-    public Token applyRules(List<Token> tokenList) {
+    public Token applyRules(@NotNull List<Token> tokenList) {
         while (tokenList.size() > 1) {
             computeNestingLevel(tokenList);
 
@@ -106,7 +106,7 @@ public class Calculator {
         return tokenList.getFirst();
     }
 
-    public void printTokens(@NotNull List<Token> tokenList) {
+    public void printTokens(@NotNull final List<Token> tokenList) {
         tokenList.forEach(token -> System.out.println("Value: " + token.getValue() + "\nNesting Level: " + token.getNestingLevel() + "\n"));
     }
 
@@ -122,6 +122,7 @@ public class Calculator {
         calculator.computeNestingLevel(tokenList);
         calculator.printTokens(tokenList);
 
-        System.out.println(calculator.applyRules(tokenList).getValue());
+        final String result = calculator.applyRules(tokenList).getValue();
+        System.out.println(result);
     }
 }
