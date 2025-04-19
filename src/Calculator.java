@@ -1,9 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Calculator {
     public List<Token> createTokenList(@NotNull String expression) {
@@ -13,11 +10,10 @@ public class Calculator {
         Arrays.stream(tokens).forEach(
                 value -> tokenList.add(new Token(value))
         );
-
         return tokenList;
     }
 
-    public void computeNestingLevel(@NotNull List<Token> tokenList) {
+    public void computeNestingLevel(@NotNull final List<Token> tokenList) {
         int nestingLevel = 0;
 
         for (Token token : tokenList) {
@@ -30,7 +26,87 @@ public class Calculator {
         }
     }
 
-    public void printTokens(@NotNull List<Token> tokenList) {
+    public Token calculateFlatExpression(@NotNull List<Token> expression) {
+        // remove parenthesis
+        expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+
+        if (expression.getFirst().getValue().equals("("))
+            expression.removeFirst();
+
+        if (expression.getLast().getValue().equals(")"))
+            expression.removeLast();
+
+        while (expression.size() > 1) {
+            for (int i = 0; i < expression.size(); i++) {
+                if (expression.get(i).isOperator() && expression.get(i).strength() == 2) {
+                    double left = Double.parseDouble(expression.get(i - 1).getValue());
+                    double right = Double.parseDouble(expression.get(i + 1).getValue());
+                    double result = expression.get(i).getValue().equals("*") ? left * right : left / right;
+
+                    Token resultToken = new Token(Double.toString(result));
+                    expression.set(i - 1, resultToken);
+                    expression.subList(i, i + 2).clear();
+
+                    expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
+                    break;
+                }
+            }
+
+            for (int i = 0; i < expression.size(); i++) {
+                if (expression.get(i).isOperator() && expression.get(i).strength() == 1) {
+                    double left = Double.parseDouble(expression.get(i - 1).getValue());
+                    double right = Double.parseDouble(expression.get(i + 1).getValue());
+                    double result = expression.get(i).getValue().equals("+") ? left + right : left - right;
+
+                    Token resultToken = new Token(Double.toString(result));
+                    expression.set(i - 1, resultToken);
+                    expression.subList(i, i + 2).clear();
+
+                    expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
+                    break;
+                }
+            }
+            expression.forEach(t -> System.out.println("AfterIteration: " + t.getValue()));
+        }
+        return expression.getFirst();
+    }
+
+    public Token applyRules(@NotNull List<Token> tokenList) {
+        while (tokenList.size() > 1) {
+            computeNestingLevel(tokenList);
+
+            int maxNestingLevel = tokenList.stream()
+                    .mapToInt(Token::getNestingLevel)
+                    .max()
+                    .orElse(0);
+
+            int start = -1, end = -1;
+            for (int i = 0; i < tokenList.size(); i++) {
+                Token t = tokenList.get(i);
+                System.out.println("ApplyRules: " + t.getValue() + " nesting level: " + t.getNestingLevel());
+                if (t.getValue().equals("(") && t.getNestingLevel() == maxNestingLevel) {
+                    start = i;
+                } else if (t.getValue().equals(")")) {
+                    end = i;
+                    break;
+                }
+            }
+
+            System.out.println("First Index: " + start);
+            System.out.println("Last Index: " + end);
+
+            if (start == -1 || end == -1)
+                return calculateFlatExpression(tokenList);
+
+            List<Token> expression = new ArrayList<>(tokenList.subList(start, end + 1));
+            Token result = calculateFlatExpression(expression);
+            tokenList.set(start, result);
+            tokenList.subList(start + 1, end + 1).clear();
+        }
+        return tokenList.getFirst();
+    }
+
+    public void printTokens(@NotNull final List<Token> tokenList) {
         tokenList.forEach(token -> System.out.println("Value: " + token.getValue() + "\nNesting Level: " + token.getNestingLevel() + "\n"));
     }
 
@@ -45,5 +121,8 @@ public class Calculator {
 
         calculator.computeNestingLevel(tokenList);
         calculator.printTokens(tokenList);
+
+        final String result = calculator.applyRules(tokenList).getValue();
+        System.out.println(result);
     }
 }

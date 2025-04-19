@@ -15,6 +15,14 @@ public class Token {
         return (this.value.equals("*") || this.value.equals("/")) ? 2 : (this.value.equals("+") || this.value.equals("-")) ? 1 : 0;
     }
 
+    @Override
+    public String toString() {
+        return "Token{" +
+                "value='" + value + '\'' +
+                ", nestingLevel=" + nestingLevel +
+                '}';
+    }
+
     // Getter
     public String getValue() {
         return value;
