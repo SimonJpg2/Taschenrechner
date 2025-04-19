@@ -40,29 +40,37 @@ public class Calculator {
         return indices;
     }*/
 
-
+public Token calculateFlatExpression(@NotNull List<Token> expression) {
+    return null;
+}
 
     public Token applyRules(List<Token> tokenList) {
         // TODO: zwei Rekursive Funktionen: Eine zum Berechnen der Klammern, eine weitere zum Berechnen mehrerer Ausdrücke in einer Klammer
 
-        int maxNestingLevel = tokenList.stream()
-                .mapToInt(Token::getNestingLevel)
-                .max()
-                .orElse(0);
+        while (tokenList.size() > 1) {
+            int maxNestingLevel = tokenList.stream()
+                    .mapToInt(Token::getNestingLevel)
+                    .max()
+                    .orElse(0);
 
-        int start = -1, end = -1;
-        for (int i = 0; i < tokenList.size(); i++) {
-            Token t = tokenList.get(i);
-            if (t.getValue().equals("(") && t.getNestingLevel() == maxNestingLevel) {
-                start = i;
-            } else if (t.getValue().equals(")")) {
-                end = i;
-                break;
+            int start = -1, end = -1;
+            for (int i = 0; i < tokenList.size(); i++) {
+                Token t = tokenList.get(i);
+                if (t.getValue().equals("(") && t.getNestingLevel() == maxNestingLevel) {
+                    start = i;
+                } else if (t.getValue().equals(")")) {
+                    end = i;
+                    break;
+                }
             }
-        }
 
-        System.out.println("First Index: " + start);
-        System.out.println("Last Index: " + end);
+            System.out.println("First Index: " + start);
+            System.out.println("Last Index: " + end);
+
+            List<Token> expression = new ArrayList<>(tokenList.subList(start, end + 1));
+            expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+            break;
+        }
 
         return null;
     }
