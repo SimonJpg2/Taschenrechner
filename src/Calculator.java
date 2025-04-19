@@ -41,7 +41,44 @@ public class Calculator {
     }*/
 
 public Token calculateFlatExpression(@NotNull List<Token> expression) {
-    return null;
+    // remove parenthesis
+    expression.removeFirst();
+    expression.removeLast();
+    expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+
+    while (expression.size() > 1) {
+        for (int i = 0; i < expression.size(); i++) {
+            if (expression.get(i).isOperator() && expression.get(i).strength() == 2) {
+                double left = Double.parseDouble(expression.get(i - 1).getValue());
+                double right = Double.parseDouble(expression.get(i + 1).getValue());
+                double result = expression.get(i).getValue().equals("*") ? left * right : left / right;
+
+                Token resultToken = new Token(Double.toString(result));
+                expression.set(i - 1, resultToken);
+                expression.subList(i, i + 2).clear();
+
+                expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
+                break;
+            }
+        }
+
+        for (int i = 0; i < expression.size(); i++) {
+            if (expression.get(i).isOperator() && expression.get(i).strength() == 1) {
+                double left = Double.parseDouble(expression.get(i - 1).getValue());
+                double right = Double.parseDouble(expression.get(i + 1).getValue());
+                double result = expression.get(i).getValue().equals("+") ? left + right : left - right;
+
+                Token resultToken = new Token(Double.toString(result));
+                expression.set(i - 1, resultToken);
+                expression.subList(i, i + 2).clear();
+
+                expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
+                break;
+            }
+        }
+        expression.forEach(t -> System.out.println("AfterIteration: " + t.getValue()));
+    }
+    return expression.getFirst();
 }
 
     public Token applyRules(List<Token> tokenList) {
@@ -68,7 +105,8 @@ public Token calculateFlatExpression(@NotNull List<Token> expression) {
             System.out.println("Last Index: " + end);
 
             List<Token> expression = new ArrayList<>(tokenList.subList(start, end + 1));
-            expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+            Token result = calculateFlatExpression(expression);
+
             break;
         }
 
