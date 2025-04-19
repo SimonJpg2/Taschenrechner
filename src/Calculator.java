@@ -5,12 +5,11 @@ import java.util.*;
 public class Calculator {
     public List<Token> createTokenList(@NotNull String expression) {
         List<Token> tokenList = new ArrayList<>();
-        String[] tokens = expression.split("(?<=[-+*/()])|(?=[-+*/()])"); // Regex teilt alles links und rechts von Zahlen auf
+        String[] tokens = expression.split("(?<=[-+*/()])|(?=[-+*/()])");
 
         Arrays.stream(tokens).forEach(
                 value -> tokenList.add(new Token(value))
         );
-
         return tokenList;
     }
 
@@ -27,64 +26,55 @@ public class Calculator {
         }
     }
 
-    /*public List<Integer> computeIndices(@NotNull List<Token> tokenList) {
-        List<Integer> indices = new ArrayList<>();
+    public Token calculateFlatExpression(@NotNull List<Token> expression) {
+        // remove parenthesis
+        expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
 
-        int maxNestingLevel = Collections.max(
-                tokenList, Comparator.comparing(Token::getNestingLevel)
-        ).getNestingLevel();
+        if (expression.getFirst().getValue().equals("("))
+            expression.removeFirst();
 
-        for (int i = 0; i < tokenList.size(); i++)
-            if (tokenList.get(i).getNestingLevel() == maxNestingLevel)
-                indices.add(i);
-        return indices;
-    }*/
+        if (expression.getLast().getValue().equals(")"))
+            expression.removeLast();
 
-public Token calculateFlatExpression(@NotNull List<Token> expression) {
-    // remove parenthesis
-    expression.removeFirst();
-    expression.removeLast();
-    expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+        while (expression.size() > 1) {
+            for (int i = 0; i < expression.size(); i++) {
+                if (expression.get(i).isOperator() && expression.get(i).strength() == 2) {
+                    double left = Double.parseDouble(expression.get(i - 1).getValue());
+                    double right = Double.parseDouble(expression.get(i + 1).getValue());
+                    double result = expression.get(i).getValue().equals("*") ? left * right : left / right;
 
-    while (expression.size() > 1) {
-        for (int i = 0; i < expression.size(); i++) {
-            if (expression.get(i).isOperator() && expression.get(i).strength() == 2) {
-                double left = Double.parseDouble(expression.get(i - 1).getValue());
-                double right = Double.parseDouble(expression.get(i + 1).getValue());
-                double result = expression.get(i).getValue().equals("*") ? left * right : left / right;
+                    Token resultToken = new Token(Double.toString(result));
+                    expression.set(i - 1, resultToken);
+                    expression.subList(i, i + 2).clear();
 
-                Token resultToken = new Token(Double.toString(result));
-                expression.set(i - 1, resultToken);
-                expression.subList(i, i + 2).clear();
-
-                expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
-                break;
+                    expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
+                    break;
+                }
             }
-        }
 
-        for (int i = 0; i < expression.size(); i++) {
-            if (expression.get(i).isOperator() && expression.get(i).strength() == 1) {
-                double left = Double.parseDouble(expression.get(i - 1).getValue());
-                double right = Double.parseDouble(expression.get(i + 1).getValue());
-                double result = expression.get(i).getValue().equals("+") ? left + right : left - right;
+            for (int i = 0; i < expression.size(); i++) {
+                if (expression.get(i).isOperator() && expression.get(i).strength() == 1) {
+                    double left = Double.parseDouble(expression.get(i - 1).getValue());
+                    double right = Double.parseDouble(expression.get(i + 1).getValue());
+                    double result = expression.get(i).getValue().equals("+") ? left + right : left - right;
 
-                Token resultToken = new Token(Double.toString(result));
-                expression.set(i - 1, resultToken);
-                expression.subList(i, i + 2).clear();
+                    Token resultToken = new Token(Double.toString(result));
+                    expression.set(i - 1, resultToken);
+                    expression.subList(i, i + 2).clear();
 
-                expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
-                break;
+                    expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
+                    break;
+                }
             }
+            expression.forEach(t -> System.out.println("AfterIteration: " + t.getValue()));
         }
-        expression.forEach(t -> System.out.println("AfterIteration: " + t.getValue()));
+        return expression.getFirst();
     }
-    return expression.getFirst();
-}
 
     public Token applyRules(List<Token> tokenList) {
-        // TODO: zwei Rekursive Funktionen: Eine zum Berechnen der Klammern, eine weitere zum Berechnen mehrerer Ausdrücke in einer Klammer
-
         while (tokenList.size() > 1) {
+            computeNestingLevel(tokenList);
+
             int maxNestingLevel = tokenList.stream()
                     .mapToInt(Token::getNestingLevel)
                     .max()
@@ -93,6 +83,7 @@ public Token calculateFlatExpression(@NotNull List<Token> expression) {
             int start = -1, end = -1;
             for (int i = 0; i < tokenList.size(); i++) {
                 Token t = tokenList.get(i);
+                System.out.println("ApplyRules: " + t.getValue() + " nesting level: " + t.getNestingLevel());
                 if (t.getValue().equals("(") && t.getNestingLevel() == maxNestingLevel) {
                     start = i;
                 } else if (t.getValue().equals(")")) {
@@ -104,13 +95,15 @@ public Token calculateFlatExpression(@NotNull List<Token> expression) {
             System.out.println("First Index: " + start);
             System.out.println("Last Index: " + end);
 
+            if (start == -1 || end == -1)
+                return calculateFlatExpression(tokenList);
+
             List<Token> expression = new ArrayList<>(tokenList.subList(start, end + 1));
             Token result = calculateFlatExpression(expression);
-
-            break;
+            tokenList.set(start, result);
+            tokenList.subList(start + 1, end + 1).clear();
         }
-
-        return null;
+        return tokenList.getFirst();
     }
 
     public void printTokens(@NotNull List<Token> tokenList) {
@@ -129,7 +122,6 @@ public Token calculateFlatExpression(@NotNull List<Token> expression) {
         calculator.computeNestingLevel(tokenList);
         calculator.printTokens(tokenList);
 
-        System.out.println("Test:");
         System.out.println(calculator.applyRules(tokenList).getValue());
     }
 }
