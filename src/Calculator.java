@@ -5,36 +5,44 @@ import java.util.*;
 public class Calculator {
     public List<Token> createTokenList(@NotNull String expression) {
         List<Token> tokenList = new ArrayList<>();
-        String[] tokens = expression.split("(?<=[-+*/()])|(?=[-+*/()])");
+        final String[] values = expression.split("(?<=[-+*/()])|(?=[-+*/()])");
 
-        Arrays.stream(tokens).forEach(
+        Arrays.stream(values).forEach(
                 value -> tokenList.add(new Token(value))
         );
         return tokenList;
     }
 
-    public void computeNestingLevel(@NotNull final List<Token> tokenList) {
+    public void computeNestingLevel(@NotNull List<Token> tokenList) {
         int nestingLevel = 0;
 
         for (Token token : tokenList) {
-            if (token.getValue().equals("(")) {
+            final String value = token.getValue();
+
+            if (value.equals("("))
                 nestingLevel++;
-            } else if (token.getValue().equals(")")) {
+
+            if (value.equals(")"))
                 nestingLevel--;
-            }
+
             token.setNestingLevel(nestingLevel);
         }
     }
 
-    public Token calculateFlatExpression(@NotNull List<Token> expression) {
-        // remove parenthesis
-        expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+    private void removeOuterParentheses(@NotNull List<Token> expression) {
+        final String firstValue = expression.getFirst().getValue();
+        final String lastValue = expression.getLast().getValue();
 
-        if (expression.getFirst().getValue().equals("("))
+        if (!expression.isEmpty() && firstValue.equals("("))
             expression.removeFirst();
 
-        if (expression.getLast().getValue().equals(")"))
+        if (!expression.isEmpty() && lastValue.equals(")"))
             expression.removeLast();
+    }
+
+    public Token calculateFlatExpression(@NotNull List<Token> expression) {
+        expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
+        removeOuterParentheses(expression);
 
         while (expression.size() > 1) {
             for (int i = 0; i < expression.size(); i++) {
@@ -100,8 +108,9 @@ public class Calculator {
 
             List<Token> expression = new ArrayList<>(tokenList.subList(start, end + 1));
             Token result = calculateFlatExpression(expression);
+
             tokenList.set(start, result);
-            tokenList.subList(start + 1, end + 1).clear();
+            tokenList.subList(start + 1, end + 1).clear(); // Changes position of indices!
         }
         return tokenList.getFirst();
     }
