@@ -14,7 +14,7 @@ public class Calculator {
         return tokenList;
     }
 
-    public void computeNestingLevel(@NotNull List<Token> tokenList) {
+    private void computeNestingLevel(@NotNull List<Token> tokenList) {
         int nestingLevel = 0;
 
         for (Token token : tokenList) {
@@ -74,7 +74,7 @@ public class Calculator {
         return false;
     }
 
-    public Token calculateFlatExpression(@NotNull List<Token> expression) {
+    private Token calculateFlatExpression(@NotNull List<Token> expression) {
         removeOuterParentheses(expression);
 
         while (expression.size() > 1) {
@@ -141,8 +141,6 @@ public class Calculator {
         String input = sc.nextLine();
 
         List<Token> tokenList = calculator.createTokenList(input);
-
-        calculator.computeNestingLevel(tokenList);
         calculator.printTokens(tokenList);
 
         final String result = calculator.applyRules(tokenList).getValue();
