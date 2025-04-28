@@ -3,6 +3,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Calculator {
+
     public List<Token> createTokenList(@NotNull String expression) {
         List<Token> tokenList = new ArrayList<>();
         final String[] values = expression.split("(?<=[-+*/()])|(?=[-+*/()])");
@@ -40,41 +41,47 @@ public class Calculator {
             expression.removeLast();
     }
 
+    private void replaceResult(@NotNull List<Token> expression, double result, int index) {
+        Token resultToken = new Token(Double.toString(result));
+
+        expression.set(index - 1, resultToken);
+        expression.subList(index, index + 2).clear();
+    }
+
+    private boolean applyOperators(@NotNull List<Token> expression, int strength) {
+        for (int i = 0; i < expression.size(); i++) {
+            Token token = expression.get(i);
+
+            if (token.isOperator() && token.strength() == strength) {
+                final Token left = expression.get(i - 1);
+                final Token right = expression.get(i + 1);
+
+                double firstValue = Double.parseDouble(left.getValue());
+                double secondValue = Double.parseDouble(right.getValue());
+
+                double result = switch(token.getValue()) {
+                    case "*" -> firstValue * secondValue;
+                    case "/" -> firstValue / secondValue;
+                    case "+" -> firstValue + secondValue;
+                    case "-" -> firstValue - secondValue;
+                    default -> throw new IllegalArgumentException("Unsupported operator: " + token.getValue());
+                };
+
+                replaceResult(expression, result, i);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Token calculateFlatExpression(@NotNull List<Token> expression) {
-        expression.forEach(t -> System.out.println("Expression: " + t.getValue()));
         removeOuterParentheses(expression);
 
         while (expression.size() > 1) {
-            for (int i = 0; i < expression.size(); i++) {
-                if (expression.get(i).isOperator() && expression.get(i).strength() == 2) {
-                    double left = Double.parseDouble(expression.get(i - 1).getValue());
-                    double right = Double.parseDouble(expression.get(i + 1).getValue());
-                    double result = expression.get(i).getValue().equals("*") ? left * right : left / right;
+            boolean appliedMultiplication = applyOperators(expression, 2);
 
-                    Token resultToken = new Token(Double.toString(result));
-                    expression.set(i - 1, resultToken);
-                    expression.subList(i, i + 2).clear();
-
-                    expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
-                    break;
-                }
-            }
-
-            for (int i = 0; i < expression.size(); i++) {
-                if (expression.get(i).isOperator() && expression.get(i).strength() == 1) {
-                    double left = Double.parseDouble(expression.get(i - 1).getValue());
-                    double right = Double.parseDouble(expression.get(i + 1).getValue());
-                    double result = expression.get(i).getValue().equals("+") ? left + right : left - right;
-
-                    Token resultToken = new Token(Double.toString(result));
-                    expression.set(i - 1, resultToken);
-                    expression.subList(i, i + 2).clear();
-
-                    expression.forEach(t -> System.out.println("AfterCalculation: " + t.getValue()));
-                    break;
-                }
-            }
-            expression.forEach(t -> System.out.println("AfterIteration: " + t.getValue()));
+            if (!appliedMultiplication)
+                applyOperators(expression, 1);
         }
         return expression.getFirst();
     }
@@ -88,6 +95,7 @@ public class Calculator {
                     .max()
                     .orElse(0);
 
+            // TODO: Refactor
             int start = -1, end = -1;
             for (int i = 0; i < tokenList.size(); i++) {
                 Token t = tokenList.get(i);
