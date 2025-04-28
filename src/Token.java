@@ -17,10 +17,10 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token{" +
+        return "[" +
                 "value='" + value + '\'' +
                 ", nestingLevel=" + nestingLevel +
-                '}';
+                ']';
     }
 
     // Getter

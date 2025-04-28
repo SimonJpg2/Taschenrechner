@@ -41,7 +41,7 @@ public class Calculator {
             expression.removeLast();
     }
 
-    private void replaceResult(@NotNull List<Token> expression, double result, int index) {
+    private void replaceExpressionWithResult(@NotNull List<Token> expression, double result, int index) {
         Token resultToken = new Token(Double.toString(result));
 
         expression.set(index - 1, resultToken);
@@ -67,7 +67,7 @@ public class Calculator {
                     default -> throw new IllegalArgumentException("Unsupported operator: " + token.getValue());
                 };
 
-                replaceResult(expression, result, i);
+                replaceExpressionWithResult(expression, result, i);
                 return true;
             }
         }
@@ -86,6 +86,23 @@ public class Calculator {
         return expression.getFirst();
     }
 
+    private Range computeMaxNestingLevelPosition(@NotNull List<Token> tokenList, int maxNestingLevel) {
+        int start = -1, end = -1;
+
+        for (int i = 0; i < tokenList.size(); i++) {
+            Token token = tokenList.get(i);
+            String value = token.getValue();
+
+            if (value.equals("(") && token.getNestingLevel() == maxNestingLevel) {
+                start = i;
+            } else if (value.equals(")")) {
+                end = i;
+                break;
+            }
+        }
+        return new Range(start, end);
+    }
+
     public Token applyRules(@NotNull List<Token> tokenList) {
         while (tokenList.size() > 1) {
             computeNestingLevel(tokenList);
@@ -94,37 +111,26 @@ public class Calculator {
                     .mapToInt(Token::getNestingLevel)
                     .max()
                     .orElse(0);
+            Range positions = computeMaxNestingLevelPosition(tokenList, maxNestingLevel);
 
-            // TODO: Refactor
-            int start = -1, end = -1;
-            for (int i = 0; i < tokenList.size(); i++) {
-                Token t = tokenList.get(i);
-                System.out.println("ApplyRules: " + t.getValue() + " nesting level: " + t.getNestingLevel());
-                if (t.getValue().equals("(") && t.getNestingLevel() == maxNestingLevel) {
-                    start = i;
-                } else if (t.getValue().equals(")")) {
-                    end = i;
-                    break;
-                }
-            }
-
-            System.out.println("First Index: " + start);
-            System.out.println("Last Index: " + end);
+            int start = positions.start();
+            int end = positions.end();
 
             if (start == -1 || end == -1)
                 return calculateFlatExpression(tokenList);
 
-            List<Token> expression = new ArrayList<>(tokenList.subList(start, end + 1));
-            Token result = calculateFlatExpression(expression);
+            List<Token> flatExpression = new ArrayList<>(tokenList.subList(start, end + 1));
+            Token result = calculateFlatExpression(flatExpression);
 
             tokenList.set(start, result);
-            tokenList.subList(start + 1, end + 1).clear(); // Changes position of indices!
+            tokenList.subList(start + 1, end + 1).clear();
         }
         return tokenList.getFirst();
     }
 
     public void printTokens(@NotNull final List<Token> tokenList) {
-        tokenList.forEach(token -> System.out.println("Value: " + token.getValue() + "\nNesting Level: " + token.getNestingLevel() + "\n"));
+        //tokenList.forEach(token -> System.out.println("Value: " + token.getValue() + "\nNesting Level: " + token.getNestingLevel() + "\n"));
+        tokenList.forEach(System.out::println);
     }
 
     public static void main(String[] args) {
