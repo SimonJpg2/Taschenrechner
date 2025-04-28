@@ -74,16 +74,16 @@ public class Calculator {
         return false;
     }
 
-    private Token calculateFlatExpression(@NotNull List<Token> expression) {
-        removeOuterParentheses(expression);
+    private Token calculateFlatExpression(@NotNull List<Token> flatExpression) {
+        removeOuterParentheses(flatExpression);
 
-        while (expression.size() > 1) {
-            boolean appliedMultiplication = applyOperators(expression, 2);
+        while (flatExpression.size() > 1) {
+            boolean appliedMultiplication = applyOperators(flatExpression, 2);
 
             if (!appliedMultiplication)
-                applyOperators(expression, 1);
+                applyOperators(flatExpression, 1);
         }
-        return expression.getFirst();
+        return flatExpression.getFirst();
     }
 
     private Range computeMaxNestingLevelPosition(@NotNull List<Token> tokenList, int maxNestingLevel) {
