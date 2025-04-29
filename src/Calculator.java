@@ -3,6 +3,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Calculator {
+    private final int DEFAULT_POSITION = -1;
 
     public List<Token> createTokenList(@NotNull String expression) {
         List<Token> tokenList = new ArrayList<>();
@@ -30,31 +31,31 @@ public class Calculator {
         }
     }
 
-    private void removeOuterParentheses(@NotNull List<Token> expression) {
-        final String firstValue = expression.getFirst().getValue();
-        final String lastValue = expression.getLast().getValue();
+    private void removeOuterParentheses(@NotNull List<Token> flatExpression) {
+        final String firstValue = flatExpression.getFirst().getValue();
+        final String lastValue = flatExpression.getLast().getValue();
 
-        if (!expression.isEmpty() && firstValue.equals("("))
-            expression.removeFirst();
+        if (!flatExpression.isEmpty() && firstValue.equals("("))
+            flatExpression.removeFirst();
 
-        if (!expression.isEmpty() && lastValue.equals(")"))
-            expression.removeLast();
+        if (!flatExpression.isEmpty() && lastValue.equals(")"))
+            flatExpression.removeLast();
     }
 
-    private void replaceExpressionWithResult(@NotNull List<Token> expression, double result, int index) {
+    private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int index) {
         Token resultToken = new Token(Double.toString(result));
 
-        expression.set(index - 1, resultToken);
-        expression.subList(index, index + 2).clear();
+        flatExpression.set(index - 1, resultToken);
+        flatExpression.subList(index, index + 2).clear();
     }
 
-    private boolean applyOperators(@NotNull List<Token> expression, int strength) {
-        for (int i = 0; i < expression.size(); i++) {
-            Token token = expression.get(i);
+    private boolean applyOperators(@NotNull List<Token> flatExpression, int strength) {
+        for (int i = 0; i < flatExpression.size(); i++) {
+            Token token = flatExpression.get(i);
 
             if (token.isOperator() && token.strength() == strength) {
-                final Token left = expression.get(i - 1);
-                final Token right = expression.get(i + 1);
+                final Token left = flatExpression.get(i - 1);
+                final Token right = flatExpression.get(i + 1);
 
                 double firstValue = Double.parseDouble(left.getValue());
                 double secondValue = Double.parseDouble(right.getValue());
@@ -67,7 +68,7 @@ public class Calculator {
                     default -> throw new IllegalArgumentException("Unsupported operator: " + token.getValue());
                 };
 
-                replaceExpressionWithResult(expression, result, i);
+                replaceExpressionWithResult(flatExpression, result, i);
                 return true;
             }
         }
@@ -86,8 +87,8 @@ public class Calculator {
         return flatExpression.getFirst();
     }
 
-    private Range computeMaxNestingLevelPosition(@NotNull List<Token> tokenList, int maxNestingLevel) {
-        int start = -1, end = -1;
+    private Range computeFlatExpressionPosition(@NotNull List<Token> tokenList, int maxNestingLevel) {
+        int start = DEFAULT_POSITION, end = DEFAULT_POSITION;
 
         for (int i = 0; i < tokenList.size(); i++) {
             Token token = tokenList.get(i);
@@ -111,12 +112,13 @@ public class Calculator {
                     .mapToInt(Token::getNestingLevel)
                     .max()
                     .orElse(0);
-            Range positions = computeMaxNestingLevelPosition(tokenList, maxNestingLevel);
+
+            Range positions = computeFlatExpressionPosition(tokenList, maxNestingLevel);
 
             int start = positions.start();
             int end = positions.end();
 
-            if (start == -1 || end == -1)
+            if (start == DEFAULT_POSITION || end == DEFAULT_POSITION)
                 return calculateFlatExpression(tokenList);
 
             List<Token> flatExpression = new ArrayList<>(tokenList.subList(start, end + 1));
@@ -129,7 +131,6 @@ public class Calculator {
     }
 
     public void printTokens(@NotNull final List<Token> tokenList) {
-        //tokenList.forEach(token -> System.out.println("Value: " + token.getValue() + "\nNesting Level: " + token.getNestingLevel() + "\n"));
         tokenList.forEach(System.out::println);
     }
 
