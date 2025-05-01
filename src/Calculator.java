@@ -4,6 +4,16 @@ import java.util.*;
 
 public class Calculator {
     private final int DEFAULT_POSITION = -1;
+    private final Map<String, Double> customExpressions = new HashMap<>();
+
+    public void define(final String key, final double value) {
+        if (customExpressions.containsKey(key)) {
+            System.out.printf("Definition for \"%s\" already exists.", key);
+            return;
+        }
+
+        customExpressions.put(key, value);
+    }
 
     public List<Token> createTokenList(@NotNull String expression) {
         List<Token> tokenList = new ArrayList<>();
@@ -134,9 +144,27 @@ public class Calculator {
         tokenList.forEach(System.out::println);
     }
 
+    public void inputDefinition(@NotNull final Scanner sc) {
+        String definition;
+        double value;
+
+        do {
+            System.out.println("Enter a definition for a specific number.\n If you want to to skip this step, enter \"skip\"");
+            definition = sc.nextLine();
+
+            if (!definition.equalsIgnoreCase("skip")) {
+                System.out.println("Enter a value for your specified definition: ");
+                value = sc.nextDouble();
+                this.define(definition, value);
+            }
+        } while (!definition.equalsIgnoreCase("skip"));
+    }
+
     public static void main(String[] args) {
         Calculator calculator = new Calculator();
         Scanner sc = new Scanner(System.in);
+
+        calculator.inputDefinition(sc);
 
         System.out.println("Enter expression to be calculated\n");
         String input = sc.nextLine();
