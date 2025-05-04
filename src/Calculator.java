@@ -55,6 +55,11 @@ public class Calculator {
     private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int index) {
         Token resultToken = new Token(Double.toString(result));
 
+        /*
+        *  x   +   y  | flatExpression
+        * i-1  i  i+1 | indices
+        */
+
         flatExpression.set(index - 1, resultToken);
         flatExpression.subList(index, index + 2).clear();
     }
@@ -70,9 +75,9 @@ public class Calculator {
 
     private boolean applyOperators(@NotNull List<Token> flatExpression, int strength) {
         for (int i = 0; i < flatExpression.size(); i++) {
-            Token token = flatExpression.get(i);
+            Token operator = flatExpression.get(i);
 
-            if (token.isOperator() && token.strength() == strength) {
+            if (operator.isOperator() && operator.strength() == strength) {
                 Token left = flatExpression.get(i - 1);
                 Token right = flatExpression.get(i + 1);
 
@@ -82,12 +87,12 @@ public class Calculator {
                 double firstValue = Double.parseDouble(left.getValue());
                 double secondValue = Double.parseDouble(right.getValue());
 
-                double result = switch(token.getValue()) {
+                double result = switch(operator.getValue()) {
                     case "*" -> firstValue * secondValue;
                     case "/" -> firstValue / secondValue;
                     case "+" -> firstValue + secondValue;
                     case "-" -> firstValue - secondValue;
-                    default -> throw new IllegalArgumentException("Unsupported operator: " + token.getValue());
+                    default -> throw new IllegalArgumentException("Unsupported operator: " + operator.getValue());
                 };
 
                 replaceExpressionWithResult(flatExpression, result, i);
@@ -101,9 +106,9 @@ public class Calculator {
         removeOuterParentheses(flatExpression);
 
         while (flatExpression.size() > 1) {
-            boolean appliedMultiplication = applyOperators(flatExpression, 2);
+            boolean appliedStrength2Operation = applyOperators(flatExpression, 2);
 
-            if (!appliedMultiplication)
+            if (!appliedStrength2Operation)
                 applyOperators(flatExpression, 1);
         }
         return flatExpression.getFirst();
@@ -160,16 +165,17 @@ public class Calculator {
         String definition;
         double value;
 
-        do {
+        while (true) {
             System.out.println("Enter a definition for a specific number. If you want to to skip this step, enter \"skip\"");
             definition = sc.nextLine();
 
-            if (!definition.equalsIgnoreCase("skip")) {
-                System.out.println("Enter a value for your specified definition: ");
-                value = Double.parseDouble(sc.nextLine());
-                this.define(definition, value);
-            }
-        } while (!definition.equalsIgnoreCase("skip"));
+            if (definition.equalsIgnoreCase("skip"))
+                return;
+
+            System.out.println("Enter a value for your specified definition: ");
+            value = Double.parseDouble(sc.nextLine());
+            this.define(definition, value);
+        }
     }
 
     public static void main(String[] args) {
