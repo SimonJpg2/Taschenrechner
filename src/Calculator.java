@@ -59,13 +59,25 @@ public class Calculator {
         flatExpression.subList(index, index + 2).clear();
     }
 
+    private Token replaceDefinitionWithValue(Token token) {
+        final String value = token.getValue();
+
+        if (customExpressions.containsKey(value))
+            return new Token(customExpressions.get(value).toString(), token.getNestingLevel());
+
+        return token;
+    }
+
     private boolean applyOperators(@NotNull List<Token> flatExpression, int strength) {
         for (int i = 0; i < flatExpression.size(); i++) {
             Token token = flatExpression.get(i);
 
             if (token.isOperator() && token.strength() == strength) {
-                final Token left = flatExpression.get(i - 1);
-                final Token right = flatExpression.get(i + 1);
+                Token left = flatExpression.get(i - 1);
+                Token right = flatExpression.get(i + 1);
+
+                left = replaceDefinitionWithValue(left);
+                right = replaceDefinitionWithValue(right);
 
                 double firstValue = Double.parseDouble(left.getValue());
                 double secondValue = Double.parseDouble(right.getValue());
@@ -149,12 +161,12 @@ public class Calculator {
         double value;
 
         do {
-            System.out.println("Enter a definition for a specific number.\n If you want to to skip this step, enter \"skip\"");
+            System.out.println("Enter a definition for a specific number. If you want to to skip this step, enter \"skip\"");
             definition = sc.nextLine();
 
             if (!definition.equalsIgnoreCase("skip")) {
                 System.out.println("Enter a value for your specified definition: ");
-                value = sc.nextDouble();
+                value = Double.parseDouble(sc.nextLine());
                 this.define(definition, value);
             }
         } while (!definition.equalsIgnoreCase("skip"));
