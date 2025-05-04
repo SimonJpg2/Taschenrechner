@@ -4,7 +4,9 @@ import java.util.*;
 
 public class Calculator {
     private final int DEFAULT_POSITION = -1;
+
     private final Map<String, Double> customExpressions = new HashMap<>();
+    private final List<Token> tokenList = new ArrayList<>();
 
     public void define(final String key, final double value) {
         if (customExpressions.containsKey(key)) {
@@ -15,20 +17,18 @@ public class Calculator {
         customExpressions.put(key, value);
     }
 
-    public List<Token> createTokenList(@NotNull String expression) {
-        List<Token> tokenList = new ArrayList<>();
-        final String[] values = expression.split("(?<=[-+*/()])|(?=[-+*/()])");
+    public void fillTokenList(@NotNull String input) {
+        final String[] values = input.split("(?<=[-+*/()])|(?=[-+*/()])");
 
         Arrays.stream(values).forEach(
-                value -> tokenList.add(new Token(value))
+                value -> this.tokenList.add(new Token(value))
         );
-        return tokenList;
     }
 
-    private void computeNestingLevel(@NotNull List<Token> tokenList) {
+    private void computeNestingLevel() {
         int nestingLevel = 0;
 
-        for (Token token : tokenList) {
+        for (Token token : this.tokenList) {
             final String value = token.getValue();
 
             if (value.equals("("))
@@ -114,7 +114,7 @@ public class Calculator {
         return flatExpression.getFirst();
     }
 
-    private Range computeFlatExpressionPosition(@NotNull List<Token> tokenList, int maxNestingLevel) {
+    private Range computeFlatExpressionPosition(int maxNestingLevel) {
         int start = DEFAULT_POSITION, end = DEFAULT_POSITION;
 
         for (int i = 0; i < tokenList.size(); i++) {
@@ -131,16 +131,16 @@ public class Calculator {
         return new Range(start, end);
     }
 
-    public Token applyRules(@NotNull List<Token> tokenList) {
+    public Token applyRules() {
         while (tokenList.size() > 1) {
-            computeNestingLevel(tokenList);
+            computeNestingLevel();
 
             int maxNestingLevel = tokenList.stream()
                     .mapToInt(Token::getNestingLevel)
                     .max()
                     .orElse(0);
 
-            Range positions = computeFlatExpressionPosition(tokenList, maxNestingLevel);
+            Range positions = computeFlatExpressionPosition(maxNestingLevel);
 
             int start = positions.start();
             int end = positions.end();
@@ -157,8 +157,8 @@ public class Calculator {
         return tokenList.getFirst();
     }
 
-    public void printTokens(@NotNull final List<Token> tokenList) {
-        tokenList.forEach(System.out::println);
+    public void printTokens() {
+        this.tokenList.forEach(System.out::println);
     }
 
     public void inputDefinition(@NotNull final Scanner sc) {
@@ -187,10 +187,10 @@ public class Calculator {
         System.out.println("Enter expression to be calculated\n");
         String input = sc.nextLine();
 
-        List<Token> tokenList = calculator.createTokenList(input);
-        calculator.printTokens(tokenList);
+        calculator.fillTokenList(input);
+        calculator.printTokens();
 
-        final String result = calculator.applyRules(tokenList).getValue();
+        final String result = calculator.applyRules().getValue();
         System.out.println(result);
     }
 }
