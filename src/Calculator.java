@@ -188,9 +188,10 @@ public class Calculator {
         String input = sc.nextLine();
 
         calculator.fillTokenList(input);
-        calculator.printTokens();
+        calculator.printTokens(); // TODO: Add logic for logging
 
-        final String result = calculator.applyRules().getValue();
+        final Token resultToken = calculator.applyRules();
+        final String result = resultToken.getValue();
         System.out.println(result);
     }
 }
