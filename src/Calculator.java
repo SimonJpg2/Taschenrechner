@@ -9,9 +9,7 @@ public class Calculator {
     private final Map<String, Double> customDefinitions = new HashMap<>();
     private final List<Token> tokenList = new ArrayList<>();
 
-    public Calculator(final boolean LOGGING_STATE) {
-        this.LOGGING_STATE = LOGGING_STATE;
-    }
+    public Calculator(final boolean LOGGING_STATE) { this.LOGGING_STATE = LOGGING_STATE; }
 
     public void define(final String key, final double value) {
         if (customDefinitions.containsKey(key)) {
@@ -78,31 +76,36 @@ public class Calculator {
         return token;
     }
 
+    private boolean isMatchingOperator(final Token operator, final int strength) {
+        return operator.isOperator() && operator.strength() == strength;
+    }
+
     private boolean applyOperators(@NotNull List<Token> flatExpression, int strength) {
         for (int i = 0; i < flatExpression.size(); i++) {
             Token operator = flatExpression.get(i);
 
-            if (operator.isOperator() && operator.strength() == strength) {
-                Token left = flatExpression.get(i - 1);
-                Token right = flatExpression.get(i + 1);
+            if (!isMatchingOperator(operator, strength))
+                continue;
 
-                left = replaceDefinitionWithValue(left);
-                right = replaceDefinitionWithValue(right);
+            Token left = flatExpression.get(i - 1);
+            Token right = flatExpression.get(i + 1);
 
-                double firstValue = Double.parseDouble(left.getValue());
-                double secondValue = Double.parseDouble(right.getValue());
+            left = replaceDefinitionWithValue(left);
+            right = replaceDefinitionWithValue(right);
 
-                double result = switch(operator.getValue()) {
-                    case "*" -> firstValue * secondValue;
-                    case "/" -> firstValue / secondValue;
-                    case "+" -> firstValue + secondValue;
-                    case "-" -> firstValue - secondValue;
-                    default -> throw new IllegalArgumentException("Unsupported operator: " + operator.getValue());
-                };
+            double firstValue = Double.parseDouble(left.getValue());
+            double secondValue = Double.parseDouble(right.getValue());
 
-                replaceExpressionWithResult(flatExpression, result, i);
-                return true;
-            }
+            double result = switch(operator.getValue()) {
+                case "*" -> firstValue * secondValue;
+                case "/" -> firstValue / secondValue;
+                case "+" -> firstValue + secondValue;
+                case "-" -> firstValue - secondValue;
+                default -> throw new IllegalArgumentException("Unsupported operator: " + operator.getValue());
+            };
+
+            replaceExpressionWithResult(flatExpression, result, i);
+            return true;
         }
         return false;
     }
