@@ -114,9 +114,9 @@ public class Calculator {
         removeOuterParentheses(flatExpression);
 
         while (flatExpression.size() > 1) {
-            boolean appliedStrength2Operation = applyOperators(flatExpression, 2);
+            boolean appliedMultiplicationOrDivision = applyOperators(flatExpression, 2);
 
-            if (!appliedStrength2Operation)
+            if (!appliedMultiplicationOrDivision)
                 applyOperators(flatExpression, 1);
         }
         return flatExpression.getFirst();
@@ -139,6 +139,13 @@ public class Calculator {
         return new Range(start, end);
     }
 
+    public int getMaxNestingLevel() {
+        return tokenList.stream()
+                .mapToInt(Token::getNestingLevel)
+                .max()
+                .orElse(0);
+    }
+
     public Token applyRules() {
         while (tokenList.size() > 1) {
             computeNestingLevel();
@@ -148,11 +155,7 @@ public class Calculator {
                 printTokens();
             }
 
-            int maxNestingLevel = tokenList.stream()
-                    .mapToInt(Token::getNestingLevel)
-                    .max()
-                    .orElse(0);
-
+            int maxNestingLevel = getMaxNestingLevel();
             Range positions = computeFlatExpressionPosition(maxNestingLevel);
 
             int start = positions.start();
