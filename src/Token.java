@@ -6,6 +6,8 @@ public class Token {
         this.value = value;
     }
 
+    public Token(String value, int nestingLevel) { this.value = value; this.nestingLevel = nestingLevel; }
+
     // Methods
     public boolean isOperator() {
         return this.value.matches("[+\\-*/]");

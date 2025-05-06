@@ -3,21 +3,35 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Calculator {
+    private final int DEFAULT_POSITION = -1;
+    private final boolean LOGGING_STATE;
 
-    public List<Token> createTokenList(@NotNull String expression) {
-        List<Token> tokenList = new ArrayList<>();
-        final String[] values = expression.split("(?<=[-+*/()])|(?=[-+*/()])");
+    private final Map<String, Double> customDefinitions = new HashMap<>();
+    private final List<Token> tokenList = new ArrayList<>();
 
-        Arrays.stream(values).forEach(
-                value -> tokenList.add(new Token(value))
-        );
-        return tokenList;
+    public Calculator(final boolean LOGGING_STATE) { this.LOGGING_STATE = LOGGING_STATE; }
+
+    public void define(final String key, final double value) {
+        if (customDefinitions.containsKey(key)) {
+            System.out.printf("Definition for \"%s\" already exists.", key);
+            return;
+        }
+
+        customDefinitions.put(key, value);
     }
 
-    private void computeNestingLevel(@NotNull List<Token> tokenList) {
+    public void fillTokenList(@NotNull String input) {
+        final String[] values = input.split("(?<=[-+*/()])|(?=[-+*/()])");
+
+        Arrays.stream(values).forEach(
+                value -> this.tokenList.add(new Token(value))
+        );
+    }
+
+    private void computeNestingLevel() {
         int nestingLevel = 0;
 
-        for (Token token : tokenList) {
+        for (Token token : this.tokenList) {
             final String value = token.getValue();
 
             if (value.equals("("))
@@ -30,46 +44,68 @@ public class Calculator {
         }
     }
 
-    private void removeOuterParentheses(@NotNull List<Token> expression) {
-        final String firstValue = expression.getFirst().getValue();
-        final String lastValue = expression.getLast().getValue();
+    private void removeOuterParentheses(@NotNull List<Token> flatExpression) {
+        final String firstValue = flatExpression.getFirst().getValue();
+        final String lastValue = flatExpression.getLast().getValue();
 
-        if (!expression.isEmpty() && firstValue.equals("("))
-            expression.removeFirst();
+        if (!flatExpression.isEmpty() && firstValue.equals("("))
+            flatExpression.removeFirst();
 
-        if (!expression.isEmpty() && lastValue.equals(")"))
-            expression.removeLast();
+        if (!flatExpression.isEmpty() && lastValue.equals(")"))
+            flatExpression.removeLast();
     }
 
-    private void replaceExpressionWithResult(@NotNull List<Token> expression, double result, int index) {
+    private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int i) {
         Token resultToken = new Token(Double.toString(result));
 
-        expression.set(index - 1, resultToken);
-        expression.subList(index, index + 2).clear();
+        /*
+        *  x   +   y  | flatExpression
+        * i-1  i  i+1 | indices
+        */
+
+        flatExpression.set(i - 1, resultToken);
+        flatExpression.subList(i, i + 2).clear();
     }
 
-    private boolean applyOperators(@NotNull List<Token> expression, int strength) {
-        for (int i = 0; i < expression.size(); i++) {
-            Token token = expression.get(i);
+    private Token replaceDefinitionWithValue(Token token) {
+        final String value = token.getValue();
 
-            if (token.isOperator() && token.strength() == strength) {
-                final Token left = expression.get(i - 1);
-                final Token right = expression.get(i + 1);
+        if (customDefinitions.containsKey(value))
+            return new Token(customDefinitions.get(value).toString(), token.getNestingLevel());
 
-                double firstValue = Double.parseDouble(left.getValue());
-                double secondValue = Double.parseDouble(right.getValue());
+        return token;
+    }
 
-                double result = switch(token.getValue()) {
-                    case "*" -> firstValue * secondValue;
-                    case "/" -> firstValue / secondValue;
-                    case "+" -> firstValue + secondValue;
-                    case "-" -> firstValue - secondValue;
-                    default -> throw new IllegalArgumentException("Unsupported operator: " + token.getValue());
-                };
+    private boolean isMatchingOperator(final Token operator, final int strength) {
+        return operator.isOperator() && operator.strength() == strength;
+    }
 
-                replaceExpressionWithResult(expression, result, i);
-                return true;
-            }
+    private boolean applyOperators(@NotNull List<Token> flatExpression, int strength) {
+        for (int i = 0; i < flatExpression.size(); i++) {
+            Token operator = flatExpression.get(i);
+
+            if (!isMatchingOperator(operator, strength))
+                continue;
+
+            Token left = flatExpression.get(i - 1);
+            Token right = flatExpression.get(i + 1);
+
+            left = replaceDefinitionWithValue(left);
+            right = replaceDefinitionWithValue(right);
+
+            double firstValue = Double.parseDouble(left.getValue());
+            double secondValue = Double.parseDouble(right.getValue());
+
+            double result = switch(operator.getValue()) {
+                case "*" -> firstValue * secondValue;
+                case "/" -> firstValue / secondValue;
+                case "+" -> firstValue + secondValue;
+                case "-" -> firstValue - secondValue;
+                default -> throw new IllegalArgumentException("Unsupported operator: " + operator.getValue());
+            };
+
+            replaceExpressionWithResult(flatExpression, result, i);
+            return true;
         }
         return false;
     }
@@ -78,16 +114,16 @@ public class Calculator {
         removeOuterParentheses(flatExpression);
 
         while (flatExpression.size() > 1) {
-            boolean appliedMultiplication = applyOperators(flatExpression, 2);
+            boolean appliedMultiplicationOrDivision = applyOperators(flatExpression, 2);
 
-            if (!appliedMultiplication)
+            if (!appliedMultiplicationOrDivision)
                 applyOperators(flatExpression, 1);
         }
         return flatExpression.getFirst();
     }
 
-    private Range computeMaxNestingLevelPosition(@NotNull List<Token> tokenList, int maxNestingLevel) {
-        int start = -1, end = -1;
+    private Range computeFlatExpressionPosition(int maxNestingLevel) {
+        int start = DEFAULT_POSITION, end = DEFAULT_POSITION;
 
         for (int i = 0; i < tokenList.size(); i++) {
             Token token = tokenList.get(i);
@@ -103,20 +139,29 @@ public class Calculator {
         return new Range(start, end);
     }
 
-    public Token applyRules(@NotNull List<Token> tokenList) {
-        while (tokenList.size() > 1) {
-            computeNestingLevel(tokenList);
+    public int getMaxNestingLevel() {
+        return tokenList.stream()
+                .mapToInt(Token::getNestingLevel)
+                .max()
+                .orElse(0);
+    }
 
-            int maxNestingLevel = tokenList.stream()
-                    .mapToInt(Token::getNestingLevel)
-                    .max()
-                    .orElse(0);
-            Range positions = computeMaxNestingLevelPosition(tokenList, maxNestingLevel);
+    public Token applyRules() {
+        while (tokenList.size() > 1) {
+            computeNestingLevel();
+
+            if (LOGGING_STATE) {
+                System.out.println("\n=============== INFO: Apply Rules ===============\n");
+                printTokens();
+            }
+
+            int maxNestingLevel = getMaxNestingLevel();
+            Range positions = computeFlatExpressionPosition(maxNestingLevel);
 
             int start = positions.start();
             int end = positions.end();
 
-            if (start == -1 || end == -1)
+            if (start == DEFAULT_POSITION || end == DEFAULT_POSITION)
                 return calculateFlatExpression(tokenList);
 
             List<Token> flatExpression = new ArrayList<>(tokenList.subList(start, end + 1));
@@ -128,22 +173,38 @@ public class Calculator {
         return tokenList.getFirst();
     }
 
-    public void printTokens(@NotNull final List<Token> tokenList) {
-        //tokenList.forEach(token -> System.out.println("Value: " + token.getValue() + "\nNesting Level: " + token.getNestingLevel() + "\n"));
-        tokenList.forEach(System.out::println);
+    public void printTokens() { this.tokenList.forEach(System.out::println); }
+
+    public void inputDefinition(@NotNull final Scanner sc) {
+        String definition;
+        double value;
+
+        while (true) {
+            System.out.println("Enter a definition for a specific number. If you want to to skip this step, enter \"skip\"");
+            definition = sc.nextLine();
+
+            if (definition.equalsIgnoreCase("skip"))
+                return;
+
+            System.out.println("Enter a value for your specified definition: ");
+            value = Double.parseDouble(sc.nextLine());
+            this.define(definition, value);
+        }
     }
 
     public static void main(String[] args) {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(true);
         Scanner sc = new Scanner(System.in);
+
+        calculator.inputDefinition(sc);
 
         System.out.println("Enter expression to be calculated\n");
         String input = sc.nextLine();
 
-        List<Token> tokenList = calculator.createTokenList(input);
-        calculator.printTokens(tokenList);
+        calculator.fillTokenList(input);
 
-        final String result = calculator.applyRules(tokenList).getValue();
+        final Token resultToken = calculator.applyRules();
+        final String result = resultToken.getValue();
         System.out.println(result);
     }
 }
