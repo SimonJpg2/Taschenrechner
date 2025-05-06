@@ -57,7 +57,7 @@ public class Calculator {
             flatExpression.removeLast();
     }
 
-    private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int index) {
+    private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int i) {
         Token resultToken = new Token(Double.toString(result));
 
         /*
@@ -65,8 +65,8 @@ public class Calculator {
         * i-1  i  i+1 | indices
         */
 
-        flatExpression.set(index - 1, resultToken);
-        flatExpression.subList(index, index + 2).clear();
+        flatExpression.set(i - 1, resultToken);
+        flatExpression.subList(i, i + 2).clear();
     }
 
     private Token replaceDefinitionWithValue(Token token) {
@@ -145,7 +145,6 @@ public class Calculator {
                 printTokens();
             }
 
-
             int maxNestingLevel = tokenList.stream()
                     .mapToInt(Token::getNestingLevel)
                     .max()
@@ -168,9 +167,7 @@ public class Calculator {
         return tokenList.getFirst();
     }
 
-    public void printTokens() {
-        this.tokenList.forEach(System.out::println);
-    }
+    public void printTokens() { this.tokenList.forEach(System.out::println); }
 
     public void inputDefinition(@NotNull final Scanner sc) {
         String definition;
