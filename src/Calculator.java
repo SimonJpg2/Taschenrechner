@@ -6,20 +6,20 @@ public class Calculator {
     private final int DEFAULT_POSITION = -1;
     private final boolean LOGGING_STATE;
 
+    private final Map<String, Double> customDefinitions = new HashMap<>();
+    private final List<Token> tokenList = new ArrayList<>();
+
     public Calculator(final boolean LOGGING_STATE) {
         this.LOGGING_STATE = LOGGING_STATE;
     }
 
-    private final Map<String, Double> customExpressions = new HashMap<>();
-    private final List<Token> tokenList = new ArrayList<>();
-
     public void define(final String key, final double value) {
-        if (customExpressions.containsKey(key)) {
+        if (customDefinitions.containsKey(key)) {
             System.out.printf("Definition for \"%s\" already exists.", key);
             return;
         }
 
-        customExpressions.put(key, value);
+        customDefinitions.put(key, value);
     }
 
     public void fillTokenList(@NotNull String input) {
@@ -72,8 +72,8 @@ public class Calculator {
     private Token replaceDefinitionWithValue(Token token) {
         final String value = token.getValue();
 
-        if (customExpressions.containsKey(value))
-            return new Token(customExpressions.get(value).toString(), token.getNestingLevel());
+        if (customDefinitions.containsKey(value))
+            return new Token(customDefinitions.get(value).toString(), token.getNestingLevel());
 
         return token;
     }
@@ -196,7 +196,6 @@ public class Calculator {
         String input = sc.nextLine();
 
         calculator.fillTokenList(input);
-        //calculator.printTokens(); // TODO: Add logic for logging
 
         final Token resultToken = calculator.applyRules();
         final String result = resultToken.getValue();
