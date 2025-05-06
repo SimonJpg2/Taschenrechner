@@ -4,6 +4,11 @@ import java.util.*;
 
 public class Calculator {
     private final int DEFAULT_POSITION = -1;
+    private final boolean LOGGING_STATE;
+
+    public Calculator(final boolean LOGGING_STATE) {
+        this.LOGGING_STATE = LOGGING_STATE;
+    }
 
     private final Map<String, Double> customExpressions = new HashMap<>();
     private final List<Token> tokenList = new ArrayList<>();
@@ -135,6 +140,12 @@ public class Calculator {
         while (tokenList.size() > 1) {
             computeNestingLevel();
 
+            if (LOGGING_STATE) {
+                System.out.println("\n=============== INFO: Apply Rules ===============\n");
+                printTokens();
+            }
+
+
             int maxNestingLevel = tokenList.stream()
                     .mapToInt(Token::getNestingLevel)
                     .max()
@@ -179,7 +190,7 @@ public class Calculator {
     }
 
     public static void main(String[] args) {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(true);
         Scanner sc = new Scanner(System.in);
 
         calculator.inputDefinition(sc);
@@ -188,7 +199,7 @@ public class Calculator {
         String input = sc.nextLine();
 
         calculator.fillTokenList(input);
-        calculator.printTokens(); // TODO: Add logic for logging
+        //calculator.printTokens(); // TODO: Add logic for logging
 
         final Token resultToken = calculator.applyRules();
         final String result = resultToken.getValue();
