@@ -1,3 +1,5 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -9,11 +11,13 @@ public class Calculator {
     private final Map<String, Double> customDefinitions = new HashMap<>();
     private final List<Token> tokenList = new ArrayList<>();
 
+    private static final Logger LOGGER = LogManager.getLogger(Calculator.class);
+
     public Calculator(final boolean LOGGING_STATE) { this.LOGGING_STATE = LOGGING_STATE; }
 
     public void define(final String key, final double value) {
         if (customDefinitions.containsKey(key)) {
-            System.out.printf("Definition for \"%s\" already exists.", key);
+            LOGGER.info("Definition for {} already exists", key);
             return;
         }
 
@@ -150,13 +154,14 @@ public class Calculator {
         if (!LOGGING_STATE)
             return;
 
-        System.out.println("\n=============== INFO: Apply Rules ===============\n");
-        this.tokenList.forEach(System.out::println);
+        this.tokenList.forEach(token -> LOGGER.info(token.toString()));
     }
 
     public Token applyRules() {
         while (tokenList.size() > 1) {
             computeNestingLevel();
+
+            LOGGER.info("\nMethod applyRules()\n");
             logTokenList();
 
             int maxNestingLevel = getMaxNestingLevel();
