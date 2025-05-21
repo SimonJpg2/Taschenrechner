@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Calculator {
+    private final int STRENGTH_MULTIPLICATION_DIVISION = 2;
+    private final int STRENGTH_ADDITION_SUBTRACTION = 1;
     private final int DEFAULT_POSITION = -1;
     private final boolean LOGGING_STATE;
 
@@ -49,14 +51,28 @@ public class Calculator {
     }
 
     private void removeOuterParentheses(@NotNull List<Token> flatExpression) {
-        final String firstValue = flatExpression.getFirst().getValue();
-        final String lastValue = flatExpression.getLast().getValue();
+        String firstValue = flatExpression.getFirst().getValue();
+        String lastValue = flatExpression.getLast().getValue();
 
-        if (!flatExpression.isEmpty() && firstValue.equals("("))
+        if (flatExpression.isEmpty())
+            return;
+
+        if (firstValue.equals("("))
             flatExpression.removeFirst();
 
-        if (!flatExpression.isEmpty() && lastValue.equals(")"))
+        if (lastValue.equals(")"))
             flatExpression.removeLast();
+
+        if (LOGGING_STATE) {
+            LOGGER.info("Method removeOuterParentheses()\n");
+            flatExpression.forEach(LOGGER::info);
+        }
+
+        firstValue = flatExpression.getFirst().getValue();
+        lastValue = flatExpression.getLast().getValue();
+
+        if (firstValue.equals("(") || lastValue.equals(")"))
+            removeOuterParentheses(flatExpression);
     }
 
     private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int i) {
@@ -118,26 +134,36 @@ public class Calculator {
         removeOuterParentheses(flatExpression);
 
         while (flatExpression.size() > 1) {
-            boolean appliedMultiplicationOrDivision = applyOperators(flatExpression, 2);
+            boolean appliedMultiplicationOrDivision = applyOperators(flatExpression, STRENGTH_MULTIPLICATION_DIVISION);
 
             if (!appliedMultiplicationOrDivision)
-                applyOperators(flatExpression, 1);
+                applyOperators(flatExpression, STRENGTH_ADDITION_SUBTRACTION);
         }
         return flatExpression.getFirst();
     }
 
     private Range computeFlatExpressionPosition(int maxNestingLevel) {
-        int start = DEFAULT_POSITION, end = DEFAULT_POSITION;
+        int start = DEFAULT_POSITION;
+        int end = DEFAULT_POSITION;
+        int depth = 0;
 
         for (int i = 0; i < tokenList.size(); i++) {
             Token token = tokenList.get(i);
             String value = token.getValue();
 
             if (value.equals("(") && token.getNestingLevel() == maxNestingLevel) {
-                start = i;
-            } else if (value.equals(")")) {
-                end = i;
-                break;
+                if (start == DEFAULT_POSITION) {
+                    start = i;
+                    depth = 1;
+                } else {
+                    depth++;
+                }
+            } else if (value.equals(")") && start != DEFAULT_POSITION) {
+                depth--;
+                if (depth == 0) {
+                    end = i;
+                    break;
+                }
             }
         }
         return new Range(start, end);
@@ -161,7 +187,7 @@ public class Calculator {
         while (tokenList.size() > 1) {
             computeNestingLevel();
 
-            LOGGER.info("\nMethod applyRules()\n");
+            LOGGER.info("Method applyRules()\n");
             logTokenList();
 
             int maxNestingLevel = getMaxNestingLevel();
