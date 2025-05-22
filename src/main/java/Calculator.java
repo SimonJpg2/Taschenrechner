@@ -51,11 +51,8 @@ public class Calculator {
     }
 
     private void removeOuterParentheses(@NotNull List<Token> flatExpression) {
-        String firstValue = flatExpression.getFirst().getValue();
-        String lastValue = flatExpression.getLast().getValue();
-
-        if (flatExpression.isEmpty())
-            return;
+        final String firstValue = flatExpression.getFirst().getValue();
+        final String lastValue = flatExpression.getLast().getValue();
 
         if (firstValue.equals("("))
             flatExpression.removeFirst();
@@ -67,12 +64,6 @@ public class Calculator {
             LOGGER.info("Method removeOuterParentheses()\n");
             flatExpression.forEach(LOGGER::info);
         }
-
-        firstValue = flatExpression.getFirst().getValue();
-        lastValue = flatExpression.getLast().getValue();
-
-        if (firstValue.equals("(") || lastValue.equals(")"))
-            removeOuterParentheses(flatExpression);
     }
 
     private void replaceExpressionWithResult(@NotNull List<Token> flatExpression, double result, int i) {
@@ -224,6 +215,8 @@ public class Calculator {
             this.define(definition, value);
         }
     }
+
+    public Map<String, Double> getCustomDefinitions() { return this.customDefinitions; }
 
     public static void main(String[] args) {
         Calculator calculator = new Calculator(true);
