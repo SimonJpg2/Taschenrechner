@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Calculator {
-    private final int STRENGTH_MULTIPLICATION_DIVISION = 2;
-    private final int STRENGTH_ADDITION_SUBTRACTION = 1;
     private final int DEFAULT_POSITION = -1;
     private final boolean LOGGING_STATE;
 
@@ -125,10 +123,10 @@ public class Calculator {
         removeOuterParentheses(flatExpression);
 
         while (flatExpression.size() > 1) {
-            boolean appliedMultiplicationOrDivision = applyOperators(flatExpression, STRENGTH_MULTIPLICATION_DIVISION);
+            boolean appliedMultiplicationOrDivision = applyOperators(flatExpression, Token.STRENGTH_MULTIPLICATION_DIVISION);
 
             if (!appliedMultiplicationOrDivision)
-                applyOperators(flatExpression, STRENGTH_ADDITION_SUBTRACTION);
+                applyOperators(flatExpression, Token.STRENGTH_ADDITION_SUBTRACTION);
         }
         return flatExpression.getFirst();
     }

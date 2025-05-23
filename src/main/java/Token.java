@@ -2,6 +2,9 @@ public class Token {
     private final String value;
     private int nestingLevel;
 
+    public static final int STRENGTH_MULTIPLICATION_DIVISION = 2;
+    public static final int STRENGTH_ADDITION_SUBTRACTION = 1;
+
     public Token(String value) {
         this.value = value;
     }

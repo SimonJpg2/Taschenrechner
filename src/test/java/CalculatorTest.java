@@ -1,3 +1,4 @@
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -7,120 +8,93 @@ import java.util.Scanner;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CalculatorTest {
-    private static final Calculator calculator = new Calculator(true);
+    private Calculator calculator;
+
+    @BeforeEach
+    void init() { calculator = new Calculator(true); }
 
     @Test
     void expressionWithDefinitionTest() {
-        final String firstKey = "pi";
-        final double firstValue = 3.1415;
-        calculator.define(firstKey, firstValue);
+        calculator.define("pi", 3.1415);
+        calculator.define("r", 4);
 
-        final String secondKey = "r";
-        final double secondValue = 4;
-        calculator.define(secondKey, secondValue);
-
-        final String testExpression = "2*pi*r";
+        String testExpression = "2*pi*r";
         calculator.fillTokenList(testExpression);
 
         Token resultToken = calculator.applyRules();
+        double result = Double.parseDouble(resultToken.getValue());
 
-        final double result = Double.parseDouble(resultToken.getValue());
-        final double expectedResult = 25.132;
-        final double floatingPointTolerance = 0.001;
+        double expectedResult = 25.132;
+        double floatingPointTolerance = 0.001;
 
         assertEquals(expectedResult, result, floatingPointTolerance);
     }
 
     @Test
     void expressionWithSimilarKeysTest() {
-        final String firstKey = "a";
-        final double firstValue = 2;
-        calculator.define(firstKey, firstValue);
+        calculator.define("a", 2);
+        calculator.define("b", 3);
+        calculator.define("bb", 5);
+        calculator.define("ab", 7);
 
-        final String secondKey = "b";
-        final double secondValue = 3;
-        calculator.define(secondKey, secondValue);
-
-        final String thirdKey = "bb";
-        final double thirdValue = 5;
-        calculator.define(thirdKey, thirdValue);
-
-        final String fourthKey = "ab";
-        final double fourthValue = 7;
-        calculator.define(fourthKey, fourthValue);
-
-        final String testExpression = "a+bb*b+ab";
+        String testExpression = "a+bb*b+ab";
         calculator.fillTokenList(testExpression);
 
         Token resultToken = calculator.applyRules();
 
-        final double result = Double.parseDouble(resultToken.getValue());
-        final double expectedResult = 24;
+        double result = Double.parseDouble(resultToken.getValue());
+        double expectedResult = 24;
 
         assertEquals(expectedResult, result);
     }
 
     @Test
     void expressionWithParenthesesTest() {
-        final String firstKey = "a";
-        final double firstValue = 2;
-        calculator.define(firstKey, firstValue);
+        calculator.define("a", 2);
+        calculator.define("b", 3);
+        calculator.define("bb", 5);
+        calculator.define("ab", 7);
 
-        final String secondKey = "b";
-        final double secondValue = 3;
-        calculator.define(secondKey, secondValue);
-
-        final String thirdKey = "bb";
-        final double thirdValue = 5;
-        calculator.define(thirdKey, thirdValue);
-
-        final String fourthKey = "ab";
-        final double fourthValue = 7;
-        calculator.define(fourthKey, fourthValue);
-
-        final String testExpression = "(a+bb)*((b+ab))";
+        String testExpression = "(a+bb)*((b+ab))";
         calculator.fillTokenList(testExpression);
 
         Token resultToken = calculator.applyRules();
 
-        final double result = Double.parseDouble(resultToken.getValue());
-        final double expectedResult = 70;
+        double result = Double.parseDouble(resultToken.getValue());
+        double expectedResult = 70;
 
         assertEquals(expectedResult, result);
     }
 
     @Test
     void multipleDefinitionsTest() {
-        final String key = "k";
-        final double value = 3.14;
+        calculator.define("k", 3.14);
+        calculator.define("k", 3.14);
 
-        calculator.define(key, value);
-        calculator.define(key, value);
+        Map<String, Double> customDefinitions = calculator.getCustomDefinitions();
+        assertEquals(1, customDefinitions.size());
     }
 
     @Test
     void subtractionTest() {
-        final String testExpression = "(25-15)";
+        String testExpression = "(25-15)";
         calculator.fillTokenList(testExpression);
 
-        final Token resultToken = calculator.applyRules();
-        final double result = Double.parseDouble(resultToken.getValue());
+        Token resultToken = calculator.applyRules();
+        double result = Double.parseDouble(resultToken.getValue());
 
-        final double expectedResult = 10.0;
-
-        assertEquals(expectedResult, result);
+        assertEquals(10.0, result);
     }
 
     @Test
     void divisionTest() {
-        final String testExpression = "(100/10)";
+        String testExpression = "(100/10)";
         calculator.fillTokenList(testExpression);
 
-        final Token resultToken = calculator.applyRules();
-        final double result = Double.parseDouble(resultToken.getValue());
+        Token resultToken = calculator.applyRules();
+        double result = Double.parseDouble(resultToken.getValue());
 
-        final double expectedResult = 10.0;
-        assertEquals(expectedResult, result);
+        assertEquals(10.0, result);
     }
 
     @Test
