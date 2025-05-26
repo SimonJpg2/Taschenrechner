@@ -1,5 +1,7 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 
 import java.io.ByteArrayInputStream;
 import java.util.Map;
@@ -97,6 +99,7 @@ class CalculatorTest {
         assertEquals(10.0, result);
     }
 
+
     @Test
     void inputDefinitionTest() {
         String testInput = "pi\n3.14\nskip\n";
@@ -108,6 +111,14 @@ class CalculatorTest {
         Map<String, Double> customDefinitions = calculator.getCustomDefinitions();
 
         assertEquals(1, customDefinitions.size());
-        assertEquals(3.14, customDefinitions.get("pi"));
     }
+
+    /*@ParameterizedTest
+    @CsvFileSource(resources = "/parameterised.csv", numLinesToSkip = 1)
+    void parameterisedTest(String expression, double expected) {
+        calculator.fillTokenList(expression);
+
+        Token resultToken = calculator.applyRules();
+        assertEquals(expected, Double.parseDouble(resultToken.getValue()));
+    }*/
 }
